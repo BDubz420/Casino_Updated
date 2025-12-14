@@ -1,0 +1,9 @@
+"AddonInfo"
+{
+	"name"		"Casino Kit: Blackjack"
+	"version"	"1.7.2"
+	"up_date"	"2021"
+	"author_name"	"Jacob & Crap-Head"
+	"author_url"	"https://www.gmodstore.com/users/crap-head"
+	"info"		"Casino Kit: Blackjack provides a high quality blackjack addon for your server. Exchange chips at the dealers table or the chip exchange NPC and play against other players at the table."
+}
