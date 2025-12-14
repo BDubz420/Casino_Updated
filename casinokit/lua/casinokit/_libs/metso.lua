@@ -963,6 +963,17 @@ function M.reject(value)
 end
 
 return M end)__L_define("back_pg.lua", function()
+local function isPgAvailable()
+        local suffix = system.IsWindows() and "win32" or "linux"
+
+        return file.Exists("includes/modules/pg.lua", "LUA") or
+                file.Exists("lua/bin/gmsv_pg_" .. suffix .. ".dll", "GAME")
+end
+
+if not isPgAvailable() then
+        return
+end
+
 pcall(require, "pg")
 if not pg then return end
 
@@ -1053,6 +1064,17 @@ function SQLite.new(opts)
 end
 
 return SQLite end)__L_define("back_mysqloo.lua", function()
+local function isMysqlOOAvailable()
+        local suffix = system.IsWindows() and "win32" or "linux"
+
+        return file.Exists("includes/modules/mysqloo.lua", "LUA") or
+                file.Exists("lua/bin/gmsv_mysqloo_" .. suffix .. ".dll", "GAME")
+end
+
+if not isMysqlOOAvailable() then
+        return
+end
+
 pcall(require, "mysqloo")
 if not mysqloo then return end
 

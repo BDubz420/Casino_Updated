@@ -18,17 +18,44 @@ CasinoKit.rand.isCrypto = false
 
 local cvar_disablecryptorng = CreateConVar("casinokit_disablecryptorng", "0", FCVAR_ARCHIVE)
 
-local function AttemptInstallCSPRNG()
-	if cvar_disablecryptorng:GetBool() then
-		MsgC(SCARY_COLOR, "[CasinoKit] Warning: Cryptrand is disabled which is a security risk! Use 'casinokit_disablecryptorng 0' to re-enable.\n")
-		return
-	end
+local function hasCryptoModule()
+        local suffix = system.IsWindows() and "win32" or "linux"
 
-	local ret = pcall(require, "cryptrandom")
-	if not ret or not CryptRandom then
-		ScaryTextBlock {
-			"WARNING",
-			"Currently using insecure method of random number generation.",
+        return file.Exists("includes/modules/cryptrandom.lua", "LUA") or
+                file.Exists("lua/bin/gmsv_cryptrandom_" .. suffix .. ".dll", "GAME")
+end
+
+local function AttemptInstallCSPRNG()
+        if cvar_disablecryptorng:GetBool() then
+                MsgC(SCARY_COLOR, "[CasinoKit] Warning: Cryptrand is disabled which is a security risk! Use 'casinokit_disablecryptorng 0' to re-enable.\n")
+                return
+        end
+
+        if not hasCryptoModule() then
+                ScaryTextBlock {
+                        "WARNING",
+                        "Currently using insecure method of random number generation.",
+                        "This makes it trivial for a malicious actor to cheat the system",
+                        "(for example accurately guess the contents of a shuffled deck)",
+                        "This allows said person to cheat the system without trace!",
+                        "",
+                        "Games will continue working normally, but it is VERY highly advised",
+                        "to install the secure random number generation module.",
+                        "",
+                        "Type 'casinokit_cryptohelp' in RCON (the console you're reading right",
+                        "now) for installation instructions."
+                }
+
+                -- Try again in a bit
+                timer.Create("CasinoKit_CSPRNG_AttemptInstall", 60 * 60, 1, AttemptInstallCSPRNG)
+                return
+        end
+
+        local ret = pcall(require, "cryptrandom")
+        if not ret or not CryptRandom then
+                ScaryTextBlock {
+                        "WARNING",
+                        "Currently using insecure method of random number generation.",
 			"This makes it trivial for a malicious actor to cheat the system",
 			"(for example accurately guess the contents of a shuffled deck)",
 			"This allows said person to cheat the system without trace!",
