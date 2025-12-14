@@ -309,8 +309,9 @@ function ENT:DrawButtons()
 		if hovering and isUSE then
 			btn.fn(self)
 
-			sound.PlayFile("sound/casinokit/slots/button-0" .. (math.random(3)) .. ".ogg", "3d", function(c, ...) if c then c:SetPos(isect) end end)
-		end
+local sndIndex = math.floor(util.SharedRandom("CasinoKit.SlotsButtonSound", 1, 4, CurTime()))
+sound.PlayFile("sound/casinokit/slots/button-0" .. sndIndex .. ".ogg", "3d", function(c, ...) if c then c:SetPos(isect) end end)
+end
 	end
 end
 
