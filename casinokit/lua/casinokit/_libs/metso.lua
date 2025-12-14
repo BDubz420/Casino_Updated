@@ -963,12 +963,40 @@ function M.reject(value)
 end
 
 return M end)__L_define("back_pg.lua", function()
+local function missingPgBackend(suffix)
+local msg = "[Metso] Postgres backend is unavailable because the pg binary module is not installed (expected includes/modules/pg.lua or lua/bin/gmsv_pg_" .. suffix .. ".dll)."
+
+return {
+available = false,
+new = function()
+error(msg)
+end,
+}
+end
+
+local function isPgAvailable()
+local suffix = system.IsWindows() and "win32" or "linux"
+
+if not (file.Exists("includes/modules/pg.lua", "LUA") or
+file.Exists("lua/bin/gmsv_pg_" .. suffix .. ".dll", "GAME")) then
+return false, suffix
+end
+
+return true, suffix
+end
+
+local pgAvailable, pgSuffix = isPgAvailable()
+if not pgAvailable then
+return missingPgBackend(pgSuffix)
+end
+
 pcall(require, "pg")
-if not pg then return end
+if not pg then return missingPgBackend(pgSuffix) end
 
 local Promise = __L_load("promise.lua")
 
 local Postgres = {}
+Postgres.available = true
 Postgres.__index = Postgres
 
 function Postgres:query(query)
@@ -1022,6 +1050,7 @@ return Postgres end)__L_define("back_sqlite.lua", function()
 local Promise = __L_load("promise.lua")
 
 local SQLite = {}
+SQLite.available = true
 SQLite.__index = SQLite
 
 function SQLite:query(query)
@@ -1053,12 +1082,40 @@ function SQLite.new(opts)
 end
 
 return SQLite end)__L_define("back_mysqloo.lua", function()
+local function missingMysqlOOBackend(suffix)
+local msg = "[Metso] Mysqloo backend is unavailable because the mysqloo binary module is not installed (expected includes/modules/mysqloo.lua or lua/bin/gmsv_mysqloo_" .. suffix .. ".dll)."
+
+return {
+available = false,
+new = function()
+error(msg)
+end,
+}
+end
+
+local function isMysqlOOAvailable()
+local suffix = system.IsWindows() and "win32" or "linux"
+
+if not (file.Exists("includes/modules/mysqloo.lua", "LUA") or
+file.Exists("lua/bin/gmsv_mysqloo_" .. suffix .. ".dll", "GAME")) then
+return false, suffix
+end
+
+return true, suffix
+end
+
+local mysqlooAvailable, mysqlooSuffix = isMysqlOOAvailable()
+if not mysqlooAvailable then
+return missingMysqlOOBackend(mysqlooSuffix)
+end
+
 pcall(require, "mysqloo")
-if not mysqloo then return end
+if not mysqloo then return missingMysqlOOBackend(mysqlooSuffix) end
 
 local Promise = __L_load("promise.lua")
 
 local MysqlOO = {}
+MysqlOO.available = true
 MysqlOO.__index = MysqlOO
 
 function MysqlOO:query(query)
