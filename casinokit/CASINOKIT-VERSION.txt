@@ -1,0 +1,1 @@
+This version of Casino Kit was built on 2019-2-19. Try to always make sure that you're overwriting an older version of casinokit.
