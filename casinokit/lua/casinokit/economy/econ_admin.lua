@@ -6,8 +6,8 @@ concommand.Add("casinokit_econ_resetchips", function(p, cmd, args)
 		MsgN("Previous reset command expired.")
 		last = nil
 	end
-	if not last then
-		last = {time = CurTime(), seq = math.random(1000, 9999)}
+if not last then
+last = {time = CurTime(), seq = CasinoKit.rand.Int(1000, 9999)}
 		MsgN("Type 'casinokit_econ_resetchips " .. last.seq .. "' to confirm resetting EVERY player's chips.")
 		return
 	end

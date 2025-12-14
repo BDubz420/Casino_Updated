@@ -64,9 +64,9 @@ local wheelPositions = {
 	0
 }
 local wheelEndPosition = {
-	1 + math.random(itemCount),
-	1 + math.random(itemCount),
-	1 + math.random(itemCount),
+1 + CasinoKit.rand.Int(1, itemCount),
+1 + CasinoKit.rand.Int(1, itemCount),
+1 + CasinoKit.rand.Int(1, itemCount),
 }
 local wheelVelocities = {
 	10,

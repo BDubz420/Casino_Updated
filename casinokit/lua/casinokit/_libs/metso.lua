@@ -653,16 +653,33 @@ metso.Promise = Promise
 
 metso._backends = {
 	mysqloo = __L_load("back_mysqloo.lua"),
-	pg = __L_load("back_pg.lua"),
 	sqlite = __L_load("back_sqlite.lua"),
 }
 
--- Creates a database from table that contains connection data (credentials, dbtype) 
-function metso.create(opts)
-	local driver = opts.driver or "sqlite"
+-- Prefer native MySQLOO when present, otherwise fall back to built-in SQLite without loading legacy pg binaries.
+metso._preferredDriver = metso._backends.mysqloo.available and "mysqloo" or "sqlite"
 
-	local driverClass = metso._backends[driver]
-	assert(not not driverClass, "driver '" .. driver .. "' not implemented.")
+metso._fallbackNoticeShown = {}
+
+function metso.create(opts)
+	opts = opts or {}
+
+	local requestedDriver = opts.driver or metso._preferredDriver
+	local driverClass = metso._backends[requestedDriver]
+
+	if requestedDriver == "pg" or not driverClass then
+		if not metso._fallbackNoticeShown.pg then
+			MsgN("[CasinoKit] Postgres driver is no longer supported; using SQLite instead.")
+			metso._fallbackNoticeShown.pg = true
+		end
+		driverClass = metso._backends.sqlite
+	elseif requestedDriver == "mysqloo" and not driverClass.available then
+		if not metso._fallbackNoticeShown.mysqloo then
+			MsgN("[CasinoKit] MySQLOO module not found; using SQLite backend.")
+			metso._fallbackNoticeShown.mysqloo = true
+		end
+		driverClass = metso._backends.sqlite
+	end
 
 	local driverObj = driverClass.new(opts)
 
@@ -962,66 +979,11 @@ function M.reject(value)
 	return d
 end
 
-return M end)__L_define("back_pg.lua", function()
-pcall(require, "pg")
-if not pg then return end
-
-local Promise = __L_load("promise.lua")
-
-local Postgres = {}
-Postgres.__index = Postgres
-
-function Postgres:query(query)
-	local promise = Promise.new()
-	
-	local queryObj = self.db:query(query)
-	queryObj:on("success", function(data, size)
-		-- self.lastInsertID = ??? TODO
-		self.lastAffectedRows = size
-		
-		promise:resolve(data)
-	end)
-	queryObj:on("error", function(err)
-		promise:reject(err)
-	end)
-	queryObj:run()
-
-	return promise
-end
-
-function Postgres:queryLastInsertedId()
-	return self.lastInsertID
-end
-
-function Postgres.new(opts)
-	
-	local host, username, password, database, port =
-		opts.host, opts.username, opts.password, opts.database,
-		opts.port
-	
-	if not host then error("Error: host must be specified when using Postgres as the driver") end
-	if not username then error("Error: username must be specified when using Postgres as the driver") end
-	if not password then error("Error: password must be specified when using Postgres as the driver") end
-		
-    local db = pg.new_connection()
-    local status, err = db:connect(host, username, password, database, port)
-
-    if not status then
-        error("[Metso] Connection failed: " .. tostring(err))
-    end
-	
-	return setmetatable({
-		db = db,
-		username = username,
-		password = password,
-		database = database
-	}, Postgres)
-end
-
-return Postgres end)__L_define("back_sqlite.lua", function()
+return M end)__L_define("back_sqlite.lua", function()
 local Promise = __L_load("promise.lua")
 
 local SQLite = {}
+SQLite.available = true
 SQLite.__index = SQLite
 
 function SQLite:query(query)
@@ -1053,12 +1015,30 @@ function SQLite.new(opts)
 end
 
 return SQLite end)__L_define("back_mysqloo.lua", function()
-pcall(require, "mysqloo")
-if not mysqloo then return end
+local mysqlooAvailable = false
+
+do
+	local ok = pcall(require, "mysqloo")
+	if ok and mysqloo then
+		mysqlooAvailable = true
+	end
+end
+
+if not mysqlooAvailable then
+	-- Native MySQLOO binaries are optional; fallback keeps the addon running without external modules.
+	return {
+		available = false,
+		new = function(opts)
+			local sqlite = __L_load("back_sqlite.lua")
+			return sqlite.new(opts or {})
+		end,
+	}
+end
 
 local Promise = __L_load("promise.lua")
 
 local MysqlOO = {}
+MysqlOO.available = true
 MysqlOO.__index = MysqlOO
 
 function MysqlOO:query(query)
