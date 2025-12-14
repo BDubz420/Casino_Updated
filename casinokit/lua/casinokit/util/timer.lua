@@ -1,5 +1,5 @@
 function CasinoKit.simpleTimer(delay, fn)
-	local randomId = "casinokit_simpletimer_" .. CurTime() .. "_" .. math.random()
+local randomId = "casinokit_simpletimer_" .. CurTime() .. "_" .. CasinoKit.rand.Int(0, 999999)
 	timer.Create(randomId, delay, 1, fn)
 	return {
 		stop = function(_)

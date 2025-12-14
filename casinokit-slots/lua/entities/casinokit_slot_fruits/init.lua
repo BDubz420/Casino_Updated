@@ -7,9 +7,9 @@ include("shared.lua")
 function ENT:Initialize()
 	BaseClass.Initialize(self)
 
-	for i=1,3 do
-		self:SetWheelStartRad(i, self:GetRadForItemIndex(1 + math.random(#self.WheelItems)))
-	end
+for i=1,3 do
+self:SetWheelStartRad(i, self:GetRadForItemIndex(1 + CasinoKit.rand.Int(1, #self.WheelItems)))
+end
 
 	self.JackpotCluster = 1
 
