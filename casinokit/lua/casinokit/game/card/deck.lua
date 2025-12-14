@@ -22,18 +22,14 @@ end
 function Deck:shuffle()
 	local t = self.cardStack
 
-	local rand = CasinoKit.rand.random
-	local iterations = #t
-	local j
+    local iterations = #t
 
-	for i = iterations, 2, -1 do
-		local r = rand()
-		assert(r and type(r) == "number" and r >= 0 and r <= 1)
+    for i = iterations, 2, -1 do
+            -- Use deterministic integer selection to avoid invalid 0-index swaps that could drop cards.
+            local j = CasinoKit.rand.Int(1, i)
 
-		j = math.floor(r * i)
-
-		t[i], t[j] = t[j], t[i]
-	end
+            t[i], t[j] = t[j], t[i]
+    end
 end
 
 function Deck:pop()
